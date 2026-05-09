@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id           String   @id @default(uuid())
+  type         String
+  payload      Json
+  status       String   @default("pending")
+  scheduleAt   DateTime
+  attempts     Int      @default(0)
+  maxAttempts  Int      @default(3)
+  priority     Int      @default(5)
+  callbackUrl  String?
+  tags         String[]
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  events       JobEvent[]
+}
+
+model JobEvent {
+  id        String   @id @default(uuid())
+  jobId     String
+  event     String
+  attempt   Int
+  message   String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, createdAt])
+}
