@@ -9,9 +9,12 @@ function parseIntSafe(v, fallback) {
 }
 
 async function postJob(req, res) {
-  const { type, payload, scheduleAt, priority, callbackUrl, tags, maxAttempts } = req.body || {};
-  if (!type || !scheduleAt) {
-    return res.status(400).json({ error: 'type and scheduleAt are required' });
+  const { type, payload, scheduleAt, priority, callbackUrl, tags, maxAttempts, cron } = req.body || {};
+  if (!type || (!scheduleAt && !cron)) {
+    return res.status(400).json({ error: 'type and scheduleAt (or cron) are required' });
+  }
+  if (scheduleAt && cron) {
+    return res.status(400).json({ error: 'scheduleAt and cron are mutually exclusive' });
   }
 
   const job = await createJob({
@@ -22,6 +25,7 @@ async function postJob(req, res) {
     callbackUrl,
     tags,
     maxAttempts: parseIntSafe(maxAttempts, undefined),
+    cron,
   });
 
   res.status(201).json({ job });
@@ -104,5 +108,82 @@ async function retryDead(req, res) {
   res.json({ ok: true, jobId: id });
 }
 
-module.exports = { postJob, listJobs, getJob, getJobEvents, listDeadLetter, retryDead };
+async function cancelJob(req, res) {
+  const id = req.params.id;
+  const dbJob = await prisma.job.findUnique({ where: { id } });
+  
+  if (!dbJob) return res.status(404).json({ error: 'Job not found' });
+  if (dbJob.status === 'completed' || dbJob.status === 'failed') {
+    return res.status(400).json({ error: `Cannot cancel a job with status '${dbJob.status}'` });
+  }
 
+  // Remove from bull queue. The bull job ID is the same as our DB job ID.
+  const { jobQueue } = require('../queues/jobQueue');
+  const bullJob = await jobQueue.getJob(id);
+  if (bullJob) {
+    await bullJob.remove();
+  }
+
+  await prisma.job.update({ where: { id }, data: { status: 'cancelled' } });
+  await prisma.jobEvent.create({ data: { jobId: id, event: 'cancelled', attempt: 0 } });
+
+  res.json({ message: 'Job cancelled successfully', jobId: id });
+}
+
+async function rescheduleJob(req, res) {
+  const id = req.params.id;
+  const { scheduleAt, priority } = req.body;
+
+  if (!scheduleAt) {
+    return res.status(400).json({ error: 'scheduleAt is required' });
+  }
+
+  const dbJob = await prisma.job.findUnique({ where: { id } });
+  if (!dbJob) return res.status(404).json({ error: 'Job not found' });
+  
+  if (dbJob.status !== 'pending' && dbJob.status !== 'queued') {
+    return res.status(400).json({ error: `Cannot reschedule a job with status '${dbJob.status}'. Must be pending or queued.` });
+  }
+
+  const { jobQueue } = require('../queues/jobQueue');
+  const bullJob = await jobQueue.getJob(id);
+  if (bullJob) {
+    await bullJob.remove();
+  }
+
+  const updatedData = { scheduleAt: new Date(scheduleAt) };
+  if (priority !== undefined) {
+    updatedData.priority = parseIntSafe(priority, undefined);
+  }
+
+  await prisma.job.update({ where: { id }, data: updatedData });
+  
+  const scheduleAtMs = new Date(scheduleAt).getTime();
+  const delay = Math.max(0, scheduleAtMs - Date.now());
+
+  await jobQueue.add(
+    dbJob.type,
+    { jobId: id, payload: dbJob.payload },
+    {
+      jobId: id,
+      delay,
+      priority: updatedData.priority ?? dbJob.priority,
+      attempts: dbJob.maxAttempts,
+      // fallback other opts safely
+    }
+  );
+
+  await prisma.jobEvent.create({ 
+    data: { 
+      jobId: id, 
+      event: 'rescheduled', 
+      attempt: 0,
+      meta: { oldSchedule: dbJob.scheduleAt, newSchedule: updatedData.scheduleAt }
+    } 
+  });
+
+  const updatedJob = await prisma.job.findUnique({ where: { id } });
+  res.json({ job: updatedJob });
+}
+
+module.exports = { postJob, listJobs, getJob, getJobEvents, listDeadLetter, retryDead, cancelJob, rescheduleJob };

@@ -8,6 +8,7 @@ const { responseTime } = require('./middlewares/responseTime');
 const { requestLogger } = require('./middlewares/requestLogger');
 const { metricsMiddleware } = require('./middlewares/metrics');
 
+const { authRoutes } = require('./routes/authRoutes');
 const { jobRoutes } = require('./routes/jobRoutes');
 const { healthRoutes } = require('./routes/healthRoutes');
 const { metricsRoutes } = require('./routes/metricsRoutes');
@@ -29,6 +30,7 @@ function createApp() {
   app.use(healthRoutes);
   app.use(metricsRoutes);
   app.use(adminRoutes);
+  app.use(authRoutes);
   app.use(jobRoutes);
 
   // Error handler
