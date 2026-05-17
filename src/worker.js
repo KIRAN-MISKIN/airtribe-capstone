@@ -13,4 +13,3 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 logger.info({ concurrency: runtime.worker.opts.concurrency }, 'Worker started');
-
