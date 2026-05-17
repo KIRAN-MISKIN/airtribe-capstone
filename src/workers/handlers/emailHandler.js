@@ -22,16 +22,20 @@ async function handleEmail(payload, jobId) {
 
   try {
     const fromEmail = payload.from || process.env.FROM_EMAIL || process.env.SMTP_USER;
-    
-    console.log(`Sending email to ${to}: ${subject}`);
+
+    // If TO_EMAIL is set, redirect all emails there (useful for testing)
+    const effectiveTo = process.env.TO_EMAIL || to;
+    if (process.env.TO_EMAIL && process.env.TO_EMAIL !== to) {
+      console.log(`[TO_EMAIL override] Redirecting email from ${to} → ${effectiveTo}`);
+    }
+    console.log(`Sending email to ${effectiveTo}: ${subject}`);
     
     // Send email using Nodemailer
     const info = await transporter.sendMail({
       from: fromEmail,
-      to,
+      to: effectiveTo,
       subject,
-      text: body, // plain text body
-      // html: `<b>${body}</b>`, // Can optionally use html here
+      text: body,
     });
 
     console.log(`Message sent: ${info.messageId}`);
@@ -42,13 +46,13 @@ async function handleEmail(payload, jobId) {
         data: {
           jobId,
           event: 'completed',
-          attempt: 1, // approximate
-          message: `Email sent to ${to}. Message ID: ${info.messageId}`,
+          attempt: 1,
+          message: `Email sent to ${effectiveTo} (intended: ${to}). Message ID: ${info.messageId}`,
         }
       });
     }
 
-    return { success: true, to, subject, messageId: info.messageId };
+    return { success: true, to: effectiveTo, intendedTo: to, subject, messageId: info.messageId };
   } catch (err) {
     console.error('Email sending failed:', err);
     // Hard bounce detection based on typical SMTP 550 codes

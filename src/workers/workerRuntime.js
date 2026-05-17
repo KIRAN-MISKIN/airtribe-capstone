@@ -50,7 +50,14 @@ function createWorker() {
     const jobId = job?.data?.jobId;
     if (!jobId) return;
     const attempt = (job.attemptsMade ?? 0) + 1;
-    await updateJob(jobId, { status: 'succeeded', completedAt: new Date() });
+
+    // food-order intermediate stages manage their own status transitions.
+    // They return _skipSucceededStatus:true to prevent overwriting the stage status.
+    const skipStatus = result?.result?._skipSucceededStatus === true;
+
+    if (!skipStatus) {
+      await updateJob(jobId, { status: 'succeeded', completedAt: new Date() });
+    }
     await createEvent(jobId, 'succeeded', attempt, null, { result });
 
     const dbJob = await prisma.job.findUnique({ where: { id: jobId } }).catch(() => null);

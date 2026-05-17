@@ -10,11 +10,23 @@ function parseIntSafe(v, fallback) {
 
 async function postJob(req, res) {
   const { type, payload, scheduleAt, priority, callbackUrl, tags, maxAttempts, cron } = req.body || {};
-  if (!type || (!scheduleAt && !cron)) {
+
+  // food-order jobs start immediately — no scheduleAt or cron required
+  const isFoodOrder = type === 'food-order';
+
+  if (!type || (!isFoodOrder && !scheduleAt && !cron)) {
     return res.status(400).json({ error: 'type and scheduleAt (or cron) are required' });
   }
   if (scheduleAt && cron) {
     return res.status(400).json({ error: 'scheduleAt and cron are mutually exclusive' });
+  }
+
+  // food-order: validate required payload fields up front
+  if (isFoodOrder) {
+    const { customerEmail, orderId } = payload || {};
+    if (!customerEmail || !orderId) {
+      return res.status(400).json({ error: 'food-order requires payload.customerEmail and payload.orderId' });
+    }
   }
 
   const job = await createJob({
