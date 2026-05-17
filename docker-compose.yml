@@ -30,7 +30,7 @@ services:
       retries: 5
 
   api:
-    build: .
+    image: endlesskiran/airtribe-capstone:latest
     container_name: chronos-api
     ports:
       - "3000:3000"
@@ -59,7 +59,7 @@ services:
     restart: unless-stopped
 
   worker:
-    build: .
+    image: endlesskiran/airtribe-capstone:latest
     container_name: chronos-worker
     command: ["node", "src/worker.js"]
     environment:
