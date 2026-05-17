@@ -59,7 +59,7 @@ npm run dev
 npm run worker
 ```
 
-The API will be available at `http://localhost:3001` (or the port set in `PORT`).
+The API will be available at `http://localhost:3000` (or the port set in `PORT`).
 
 ---
 
@@ -98,7 +98,7 @@ docker run -p 3000:3000 \
 
 ## API Reference
 
-> **Base URL:** `http://localhost:3001`  
+> **Base URL:** `http://localhost:3000`  
 > **Authentication:** All `/jobs` endpoints require `Authorization: Bearer <token>` obtained from the Login API.
 
 ---
@@ -112,7 +112,7 @@ Check if the API server is running.
 #### cURL
 
 ```bash
-curl -X GET http://localhost:3001/health
+curl -X GET http://localhost:3000/health
 ```
 
 #### Required Parameters
@@ -138,7 +138,7 @@ Create a new user account.
 #### cURL
 
 ```bash
-curl -X POST http://localhost:3001/auth/register \
+curl -X POST http://localhost:3000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
@@ -182,7 +182,7 @@ Authenticate and receive a JWT token.
 #### cURL
 
 ```bash
-curl -X POST http://localhost:3001/auth/login \
+curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
@@ -228,7 +228,7 @@ Schedule a new job. Supports one-time scheduling via `scheduleAt` or recurring j
 #### cURL — One-time job
 
 ```bash
-curl -X POST http://localhost:3001/jobs \
+curl -X POST http://localhost:3000/jobs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{
@@ -244,7 +244,7 @@ curl -X POST http://localhost:3001/jobs \
 #### cURL — Email job
 
 ```bash
-curl -X POST http://localhost:3001/jobs \
+curl -X POST http://localhost:3000/jobs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{
@@ -264,7 +264,7 @@ curl -X POST http://localhost:3001/jobs \
 #### cURL — Recurring report job (cron)
 
 ```bash
-curl -X POST http://localhost:3001/jobs \
+curl -X POST http://localhost:3000/jobs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{
@@ -283,7 +283,7 @@ curl -X POST http://localhost:3001/jobs \
 #### cURL — Webhook job
 
 ```bash
-curl -X POST http://localhost:3001/jobs \
+curl -X POST http://localhost:3000/jobs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{
@@ -372,7 +372,7 @@ Created → [0 min] Order Processing
 #### cURL
 
 ```bash
-curl -X POST http://localhost:3001/jobs \
+curl -X POST http://localhost:3000/jobs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{
@@ -444,7 +444,7 @@ curl -X POST http://localhost:3001/jobs \
 #### Example: Checking stage progress
 
 ```bash
-curl "http://localhost:3001/jobs/1112683e-fdc4-4e5b-b0a6-546314980fe4/events" \
+curl "http://localhost:3000/jobs/1112683e-fdc4-4e5b-b0a6-546314980fe4/events" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -482,7 +482,7 @@ Retrieve a paginated list of jobs with optional filters.
 #### cURL
 
 ```bash
-curl "http://localhost:3001/jobs?limit=10&status=queued&tag=demo" \
+curl "http://localhost:3000/jobs?limit=10&status=queued&tag=demo" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -546,7 +546,7 @@ Retrieve a single job with its latest event.
 #### cURL
 
 ```bash
-curl "http://localhost:3001/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac" \
+curl "http://localhost:3000/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -611,7 +611,7 @@ Retrieve the full event history for a job.
 #### cURL
 
 ```bash
-curl "http://localhost:3001/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac/events" \
+curl "http://localhost:3000/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac/events" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -678,7 +678,7 @@ Retrieve aggregate statistics for all jobs.
 #### cURL
 
 ```bash
-curl "http://localhost:3001/jobs/stats" \
+curl "http://localhost:3000/jobs/stats" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -721,7 +721,7 @@ Cancel a queued or pending job. Cannot cancel a completed or failed job.
 #### cURL
 
 ```bash
-curl -X DELETE "http://localhost:3001/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac" \
+curl -X DELETE "http://localhost:3000/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -763,7 +763,7 @@ Update the schedule or priority of a pending/queued job.
 #### cURL
 
 ```bash
-curl -X PATCH "http://localhost:3001/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac" \
+curl -X PATCH "http://localhost:3000/jobs/7b6d5051-b8c1-4189-8cbf-b30183290fac" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{
@@ -824,7 +824,7 @@ Browse jobs that have exhausted all retry attempts.
 #### cURL
 
 ```bash
-curl "http://localhost:3001/jobs/dead-letter?start=0&end=49" \
+curl "http://localhost:3000/jobs/dead-letter?start=0&end=49" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -876,7 +876,7 @@ Move a dead-letter job back to the active queue for re-processing.
 #### cURL
 
 ```bash
-curl -X POST "http://localhost:3001/jobs/c3d4e5f6-7890-abcd-ef01-234567890abc/retry-dead" \
+curl -X POST "http://localhost:3000/jobs/c3d4e5f6-7890-abcd-ef01-234567890abc/retry-dead" \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -917,7 +917,7 @@ Expose Prometheus-compatible metrics (no auth required).
 #### cURL
 
 ```bash
-curl http://localhost:3001/metrics
+curl http://localhost:3000/metrics
 ```
 
 #### Required Parameters
@@ -945,7 +945,7 @@ http_request_duration_ms_bucket{le="5",method="GET",route="/health",status="200"
 
 Visual dashboard for monitoring job queues in real time.
 
-- **URL:** `http://localhost:3001/admin/queues`
+- **URL:** `http://localhost:3000/admin/queues`
 - **Username:** `ADMIN_USER` from `.env` (default: `admin`)
 - **Password:** `ADMIN_PASS` from `.env` (default: `changeme`)
 
@@ -982,7 +982,7 @@ When a job has `callbackUrl` set, the worker will POST the result to that URL up
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `PORT` | No | `3001` | HTTP server port |
+| `PORT` | No | `3000` | HTTP server port |
 | `NODE_ENV` | No | `development` | Node environment |
 | `DATABASE_URL` | **Yes** | — | PostgreSQL connection string |
 | `REDIS_HOST` | **Yes** | `localhost` | Redis hostname |
